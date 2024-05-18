@@ -289,12 +289,12 @@ class Trainer:
                     xm.mark_step()
 
             # apply events
-            if "wildfire" not in ignore_event:
-                with Timer(store=stores.get("wildfire", [])):
-                    wildfire = self.compute_fire(x, seg_preds=segmentation)
-            if "smog" not in ignore_event:
-                with Timer(store=stores.get("smog", [])):
-                    smog = self.compute_smog(x, d=depth, s=segmentation)
+            # if "wildfire" not in ignore_event:
+            #     with Timer(store=stores.get("wildfire", [])):
+            #         wildfire = self.compute_fire(x, seg_preds=segmentation)
+            # if "smog" not in ignore_event:
+            #     with Timer(store=stores.get("smog", [])):
+            #         smog = self.compute_smog(x, d=depth, s=segmentation)
             if "flood" not in ignore_event:
                 with Timer(store=stores.get("flood", [])):
                     flood = self.compute_flood(
@@ -1821,25 +1821,25 @@ class Trainer:
         if (Path(self.opts.output_path) / "is_functional.test").exists() or force:
             shutil.rmtree(self.opts.output_path)
 
-    def compute_fire(self, x, seg_preds=None, z=None, z_depth=None):
-        """
-        Transforms input tensor given wildfires event
-        Args:
-            x (torch.Tensor): Input tensor
-                seg_preds (torch.Tensor): Semantic segmentation
-                predictions for input tensor
-            z (torch.Tensor): Latent vector of encoded "x".
-                Can be None if seg_preds is given.
-        Returns:
-            torch.Tensor: Wildfire version of input tensor
-        """
+    # def compute_fire(self, x, seg_preds=None, z=None, z_depth=None):
+    #     """
+    #     Transforms input tensor given wildfires event
+    #     Args:
+    #         x (torch.Tensor): Input tensor
+    #             seg_preds (torch.Tensor): Semantic segmentation
+    #             predictions for input tensor
+    #         z (torch.Tensor): Latent vector of encoded "x".
+    #             Can be None if seg_preds is given.
+    #     Returns:
+    #         torch.Tensor: Wildfire version of input tensor
+    #     """
 
-        if seg_preds is None:
-            if z is None:
-                z = self.G.encode(x)
-            seg_preds = self.G.decoders["s"](z, z_depth)
+    #     if seg_preds is None:
+    #         if z is None:
+    #             z = self.G.encode(x)
+    #         seg_preds = self.G.decoders["s"](z, z_depth)
 
-        return add_fire(x, seg_preds, self.opts.events.fire)
+    #     return add_fire(x, seg_preds, self.opts.events.fire)
 
     def compute_flood(
         self, x, z=None, z_depth=None, m=None, s=None, cloudy=None, bin_value=-1
@@ -1876,64 +1876,64 @@ class Trainer:
 
         return self.G.paint(m, x)
 
-    def compute_smog(self, x, z=None, d=None, s=None, use_sky_seg=False):
-        # implementation from the paper:
-        # HazeRD: An outdoor scene dataset and benchmark for single image dehazing
-        sky_mask = None
-        if d is None or (use_sky_seg and s is None):
-            if z is None:
-                z = self.G.encode(x)
-            if d is None:
-                d, _ = self.G.decoders["d"](z)
-            if use_sky_seg and s is None:
-                if "s" not in self.opts.tasks:
-                    raise ValueError(
-                        "Cannot have "
-                        + "(use_sky_seg is True and s is None and 's' not in tasks)"
-                    )
-                s = self.G.decoders["s"](z)
-                # TODO: s to sky mask
-                # TODO: interpolate to d's size
+    # def compute_smog(self, x, z=None, d=None, s=None, use_sky_seg=False):
+    #     # implementation from the paper:
+    #     # HazeRD: An outdoor scene dataset and benchmark for single image dehazing
+    #     sky_mask = None
+    #     if d is None or (use_sky_seg and s is None):
+    #         if z is None:
+    #             z = self.G.encode(x)
+    #         if d is None:
+    #             d, _ = self.G.decoders["d"](z)
+    #         if use_sky_seg and s is None:
+    #             if "s" not in self.opts.tasks:
+    #                 raise ValueError(
+    #                     "Cannot have "
+    #                     + "(use_sky_seg is True and s is None and 's' not in tasks)"
+    #                 )
+    #             s = self.G.decoders["s"](z)
+    #             # TODO: s to sky mask
+    #             # TODO: interpolate to d's size
 
-        params = self.opts.events.smog
+    #     params = self.opts.events.smog
 
-        airlight = params.airlight * torch.ones(3)
-        airlight = airlight.view(1, -1, 1, 1).to(self.device)
+    #     airlight = params.airlight * torch.ones(3)
+    #     airlight = airlight.view(1, -1, 1, 1).to(self.device)
 
-        irradiance = srgb2lrgb(x)
+    #     irradiance = srgb2lrgb(x)
 
-        beta = torch.tensor([params.beta / params.vr] * 3)
-        beta = beta.view(1, -1, 1, 1).to(self.device)
+    #     beta = torch.tensor([params.beta / params.vr] * 3)
+    #     beta = beta.view(1, -1, 1, 1).to(self.device)
 
-        d = normalize(d, mini=0.3, maxi=1.0)
-        d = 1.0 / d
-        d = normalize(d, mini=0.1, maxi=1)
+    #     d = normalize(d, mini=0.3, maxi=1.0)
+    #     d = 1.0 / d
+    #     d = normalize(d, mini=0.1, maxi=1)
 
-        if sky_mask is not None:
-            d[sky_mask] = 1
+    #     if sky_mask is not None:
+    #         d[sky_mask] = 1
 
-        d = torch.nn.functional.interpolate(
-            d, size=x.shape[-2:], mode="bilinear", align_corners=True
-        )
+    #     d = torch.nn.functional.interpolate(
+    #         d, size=x.shape[-2:], mode="bilinear", align_corners=True
+    #     )
 
-        d = d.repeat(1, 3, 1, 1)
+    #     d = d.repeat(1, 3, 1, 1)
 
-        transmission = torch.exp(d * -beta)
+    #     transmission = torch.exp(d * -beta)
 
-        smogged = transmission * irradiance + (1 - transmission) * airlight
+    #     smogged = transmission * irradiance + (1 - transmission) * airlight
 
-        smogged = lrgb2srgb(smogged)
+    #     smogged = lrgb2srgb(smogged)
 
-        # add yellow filter
-        alpha = params.alpha / 255
-        yellow_mask = torch.Tensor([params.yellow_color]) / 255
-        yellow_filter = (
-            yellow_mask.unsqueeze(2)
-            .unsqueeze(2)
-            .repeat(1, 1, smogged.shape[-2], smogged.shape[-1])
-            .to(self.device)
-        )
+    #     # add yellow filter
+    #     alpha = params.alpha / 255
+    #     yellow_mask = torch.Tensor([params.yellow_color]) / 255
+    #     yellow_filter = (
+    #         yellow_mask.unsqueeze(2)
+    #         .unsqueeze(2)
+    #         .repeat(1, 1, smogged.shape[-2], smogged.shape[-1])
+    #         .to(self.device)
+    #     )
 
-        smogged = smogged * (1 - alpha) + yellow_filter * alpha
+    #     smogged = smogged * (1 - alpha) + yellow_filter * alpha
 
-        return smogged
+    #     return smogged
