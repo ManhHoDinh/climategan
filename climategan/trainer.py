@@ -312,20 +312,20 @@ class Trainer:
             with Timer(store=stores.get("numpy", [])):
                 # normalize to 0-1
                 flood = normalize(flood).cpu()
-                smog = normalize(smog).cpu()
-                wildfire = normalize(wildfire).cpu()
+                # smog = normalize(smog).cpu()
+                # wildfire = normalize(wildfire).cpu()
 
                 # convert to numpy
                 flood = flood.permute(0, 2, 3, 1).numpy()
-                smog = smog.permute(0, 2, 3, 1).numpy()
-                wildfire = wildfire.permute(0, 2, 3, 1).numpy()
+                # smog = smog.permute(0, 2, 3, 1).numpy()
+                # wildfire = wildfire.permute(0, 2, 3, 1).numpy()
 
                 # convert to 0-255 uint8
                 flood = (flood * 255).astype(np.uint8)
-                smog = (smog * 255).astype(np.uint8)
-                wildfire = (wildfire * 255).astype(np.uint8)
+                # smog = (smog * 255).astype(np.uint8)
+                # wildfire = (wildfire * 255).astype(np.uint8)
 
-        output_data = {"flood": flood, "wildfire": wildfire, "smog": smog}
+        output_data = {"flood": flood}
         if return_masks:
             output_data["mask"] = (
                 ((mask > bin_value) * 255).cpu().numpy().astype(np.uint8)
