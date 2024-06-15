@@ -15,7 +15,6 @@ dash-bootstrap-components
 dash-core-components
 dash-html-components
 dash-table
-dataclasses
 decorator
 dulwich
 everett
