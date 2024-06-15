@@ -23,7 +23,7 @@ fire
 Flask
 Flask-Compress
 future
-gdown
+gdown==5.1.0
 hydra-core
 idna
 ipython
